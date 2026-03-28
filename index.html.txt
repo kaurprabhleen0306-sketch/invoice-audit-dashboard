@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Invoice Audit Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial; background: #f5f7fa; padding: 20px; }
+        h1 { text-align: center; }
+        .card { background: white; padding: 15px; margin: 10px; border-radius: 10px; }
+        .grid { display: flex; gap: 20px; }
+    </style>
+</head>
+
+<body>
+
+<h1>📊 Invoice Audit Dashboard</h1>
+
+<div class="grid">
+    <div class="card">💰 Total Overcharge: <span id="overcharge"></span></div>
+    <div class="card">📄 Total Invoices: <span id="invoices"></span></div>
+    <div class="card">🏢 Vendors: <span id="vendors"></span></div>
+</div>
+
+<canvas id="barChart"></canvas>
+
+<h3>⚠️ Top Issues</h3>
+<table border="1" width="100%" id="table"></table>
+
+<script>
+let data = [
+    {vendor:"A", billed:120, agreed:100, qty:10},
+    {vendor:"B", billed:150, agreed:140, qty:5},
+    {vendor:"A", billed:110, agreed:100, qty:8},
+    {vendor:"C", billed:200, agreed:180, qty:6}
+];
+
+// Calculate
+data.forEach(d => d.overcharge = (d.billed - d.agreed) * d.qty);
+
+let total = data.reduce((a,b)=>a+b.overcharge,0);
+document.getElementById("overcharge").innerText = "₹ " + total;
+
+document.getElementById("invoices").innerText = data.length;
+document.getElementById("vendors").innerText = new Set(data.map(d=>d.vendor)).size;
+
+// Vendor summary
+let vendorMap = {};
+data.forEach(d=>{
+    vendorMap[d.vendor] = (vendorMap[d.vendor]||0)+d.overcharge;
+});
+
+// Chart
+new Chart(document.getElementById("barChart"), {
+    type: 'bar',
+    data: {
+        labels: Object.keys(vendorMap),
+        datasets: [{
+            label: 'Overcharge',
+            data: Object.values(vendorMap)
+        }]
+    }
+});
+
+// Table
+let table = document.getElementById("table");
+table.innerHTML = "<tr><th>Vendor</th><th>Overcharge</th></tr>";
+data.sort((a,b)=>b.overcharge-a.overcharge).forEach(d=>{
+    table.innerHTML += `<tr><td>${d.vendor}</td><td>${d.overcharge}</td></tr>`;
+});
+</script>
+
+</body>
+</html>
